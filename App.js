@@ -2,6 +2,7 @@ import React from "react";
 
 // Context
 import ApiProvider from "./src/context/Api";
+import UtilsProvider from "./src/context/Utils";
 
 // Screens
 import Home from "./src/screens/Home/Home";
@@ -77,37 +78,39 @@ export default function App() {
 
     return (
         <AppearanceProvider>
-            <ApiProvider>
-                <NavigationContainer
-                    theme={scheme === "light" ? LightNavBar : DarkNavBar}
-                >
-                    <RootStack.Navigator
-                        mode="modal"
-                        screenOptions={{
-                            headerTintColor:
-                                scheme == "light"
-                                    ? lightColors.textMain
-                                    : darkColors.textMain,
-                            headerLeftContainerStyle: {
-                                paddingHorizontal: 15,
-                            },
-                            headerRightContainerStyle: {
-                                paddingHorizontal: 15,
-                            },
-                        }}
+            <UtilsProvider>
+                <ApiProvider>
+                    <NavigationContainer
+                        theme={scheme === "light" ? LightNavBar : DarkNavBar}
                     >
-                        <RootStack.Screen
-                            name="Main"
-                            component={createMainStack}
-                            options={{ headerShown: false }}
-                        ></RootStack.Screen>
-                        <RootStack.Screen
-                            name="ProductDetails"
-                            component={ProductDetails}
-                        ></RootStack.Screen>
-                    </RootStack.Navigator>
-                </NavigationContainer>
-            </ApiProvider>
+                        <RootStack.Navigator
+                            mode="modal"
+                            screenOptions={{
+                                headerTintColor:
+                                    scheme == "light"
+                                        ? lightColors.textMain
+                                        : darkColors.textMain,
+                                headerLeftContainerStyle: {
+                                    paddingHorizontal: 15,
+                                },
+                                headerRightContainerStyle: {
+                                    paddingHorizontal: 15,
+                                },
+                            }}
+                        >
+                            <RootStack.Screen
+                                name="Main"
+                                component={createMainStack}
+                                options={{ headerShown: false }}
+                            ></RootStack.Screen>
+                            <RootStack.Screen
+                                name="ProductDetails"
+                                component={ProductDetails}
+                            ></RootStack.Screen>
+                        </RootStack.Navigator>
+                    </NavigationContainer>
+                </ApiProvider>
+            </UtilsProvider>
         </AppearanceProvider>
     );
 }

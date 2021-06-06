@@ -1,4 +1,5 @@
 import React, { useState, useContext, useRef } from "react";
+import * as ScreenOrientation from "expo-screen-orientation";
 import { Alert } from "react-native";
 import {
     View,
@@ -7,18 +8,21 @@ import {
     Image,
     Animated,
     Easing,
+    Modal,
+    Text,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Camera } from "expo-camera";
 import * as Haptics from "expo-haptics";
-
 import { useFocusEffect } from "@react-navigation/native";
 
 // Components
 import ClassicButton from "../../sharedComponents/ClassicButton";
+import ProductCard from "./components/ProductCard";
 
 // Contexts
 import { API } from "../../context/Api";
+import { Utils } from "../../context/Utils";
 
 // Dark Mode
 import { useColorScheme } from "react-native-appearance";
@@ -29,17 +33,21 @@ import {
 } from "../../themeColors/ThemeColors";
 
 export default function Home(props) {
+    // context
+    const { checkIfProductExists, getDummyData } = useContext(API);
+    const { actuatedNormalize, changeScreenOrientation } = useContext(Utils);
+
     const [hasPermission, setHasPermission] = useState(null);
     const [cameraOpened, setCameraOpened] = useState(false);
-    const [flasState, setFlasState] = useState(Camera.Constants.FlashMode.off);
+    const [modalVisible, setModalVisible] = useState(false);
     const [contentScanned, setContentScanned] = useState(false);
-    const [type, setType] = useState(Camera.Constants.Type.back);
+    const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
+    const [flasState, setFlasState] = useState(Camera.Constants.FlashMode.off);
 
     const squareOpacity = useRef(new Animated.Value(1)).current;
+    const squareScale = useRef(new Animated.Value(1)).current;
     const squareColor = useRef("white");
-
-    // context
-    const { checkIfProductExists } = useContext(API);
+    const dummyData = useRef(null);
 
     // detect current theme
     var colorScheme = useColorScheme();
@@ -51,43 +59,64 @@ export default function Home(props) {
     useFocusEffect(
         React.useCallback(() => {
             props.navigation.setOptions({
+                title: "Sample App",
                 headerTitleStyle: { alignSelf: "center" },
                 headerRight: () => <TouchableOpacity></TouchableOpacity>,
                 headerLeft: () => <TouchableOpacity></TouchableOpacity>,
             });
-
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(squareOpacity, {
-                        toValue: 0,
-                        duration: 1000,
-                        ease: Easing.linear,
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(squareOpacity, {
-                        toValue: 1,
-                        duration: 1000,
-                        ease: Easing.linear,
-                        useNativeDriver: true,
-                    }),
-                ])
-            ).start();
+            changeScreenOrientation("portrait");
         }, [])
     );
 
+    const startAnimateSquare = () => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(squareScale, {
+                    toValue: 1.25,
+                    duration: 500,
+                    ease: Easing.linear,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(squareOpacity, {
+                    toValue: 0,
+                    duration: 500,
+                    ease: Easing.linear,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(squareOpacity, {
+                    toValue: 1,
+                    duration: 500,
+                    ease: Easing.linear,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(squareScale, {
+                    toValue: 1,
+                    duration: 800,
+                    ease: Easing.linear,
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+    };
+
     const openCamera = async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         const { status } = await Camera.requestPermissionsAsync();
         setHasPermission(status === "granted");
         if (status === "granted") {
             if (!cameraOpened) {
+                startAnimateSquare();
                 setCameraOpened(true);
             }
         }
     };
 
     const barCodeScanSucceed = async (info) => {
+        var scannedCode = info.data;
         if (!contentScanned) {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            // Handle the animations
+            Animated.timing(squareScale).stop();
             Animated.timing(squareOpacity).stop();
             Animated.timing(squareOpacity, {
                 toValue: 1,
@@ -96,34 +125,39 @@ export default function Home(props) {
                 useNativeDriver: true,
             }).start();
 
-            squareColor.current = "green";
-            setContentScanned(true);
-
-            // Calling API
-            var exist = await checkIfProductExists(info.data);
-            console.log(exist);
+            // Check if product exists
+            var exist = await checkIfProductExists(scannedCode);
             if (exist) {
+                squareColor.current = "#05DA6B";
+                setContentScanned(true);
+                // Get the dummy data of the scanned code
+                dummyData.current = await getDummyData(scannedCode);
                 // Delay some time to mimic the request
                 setTimeout(function () {
-                    props.navigation.navigate("ProductDetails", {
+                    // To use native modal view uncomment the below code and comment 'setModalVisible(true)' line;
+                    /*props.navigation.navigate("ProductDetails", {
                         content: info,
-                    });
+                    });*/
+                    setModalVisible(true);
                     squareColor.current = "white";
-
-                    setTimeout(function () {
-                        setContentScanned(false);
-                    }, 1000);
                 }, 1000);
             } else {
+                squareColor.current = "red";
+                setContentScanned(true);
+
                 Alert.alert(
-                    `Product with EAN: ${info.data} not find :(`,
-                    "Scan another product please",
+                    `EAN [${scannedCode}] not find`,
+                    "Scan another code please",
                     [
                         {
                             text: "Try again",
                             onPress: () => {
                                 squareColor.current = "white";
-                                setContentScanned(false);
+                                setContentScanned(true);
+                                setTimeout(function () {
+                                    // set a delay before the next scan
+                                    setContentScanned(false);
+                                }, 1000);
                             },
                         },
                     ],
@@ -132,6 +166,12 @@ export default function Home(props) {
             }
         }
     };
+
+    const modalStyleSheet = StyleSheet.create({
+        centeredView: {
+            flex: 1,
+        },
+    });
 
     const styleSheet = StyleSheet.create({
         container: {
@@ -144,10 +184,9 @@ export default function Home(props) {
                     ? lightColors.background
                     : darkColors.background,
         },
-        button: {
-            backgroundColor: "red",
+        cameraToolBtn: {
             height: 30,
-            width: 70,
+            width: 80,
             marginBottom: 30,
             marginHorizontal: 30,
         },
@@ -155,26 +194,40 @@ export default function Home(props) {
             flex: 1,
             width: "100%",
         },
+        infoView: {
+            flex: 1,
+            width: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+            borderRadius: 15,
+        },
         squareContainer: {
-            flex: 8,
+            flex: 3,
             justifyContent: "center",
             alignItems: "center",
             width: "100%",
-            // backgroundColor: "blue",
         },
-        buttonContainer: {
+        bottomBtnsContainer: {
             flex: 1,
             backgroundColor: "transparent",
             flexDirection: "row",
             justifyContent: "center",
             alignItems: "flex-end",
             width: "100%",
-            // backgroundColor: "green",
         },
-        text: {
-            fontSize: 10,
+        infoText: {
+            fontSize: actuatedNormalize(16),
             textAlign: "center",
             color: "white",
+            borderRadius: 15,
+            padding: 15,
+        },
+        infoViewBackground: {
+            borderRadius: 15,
+            backgroundColor:
+                colorScheme == "light"
+                    ? lightColors.infoBackground
+                    : darkColors.infoBackground,
         },
     });
 
@@ -185,16 +238,48 @@ export default function Home(props) {
                 {cameraOpened == true ? (
                     <Camera
                         style={styleSheet.camera}
-                        type={type}
+                        type={cameraType}
                         autoFocus={Camera.Constants.AutoFocus.on}
                         flashMode={flasState}
                         onBarCodeScanned={barCodeScanSucceed}
                     >
+                        <Modal
+                            animationType="slide"
+                            transparent={true}
+                            visible={modalVisible}
+                        >
+                            <ProductCard
+                                style={modalStyleSheet.centeredView}
+                                productInfo={dummyData.current}
+                                closeAction={() => {
+                                    setModalVisible(!modalVisible);
+                                    setTimeout(function () {
+                                        // set a delay before the next scan
+                                        setContentScanned(false);
+                                    }, 1000);
+                                    startAnimateSquare();
+                                }}
+                            ></ProductCard>
+                        </Modal>
+
+                        <View style={styleSheet.infoView}>
+                            <View style={styleSheet.infoViewBackground}>
+                                <Text style={styleSheet.infoText}>
+                                    Scan a QR or Bar code
+                                </Text>
+                            </View>
+                        </View>
+
                         <Animated.View
                             style={[
                                 styleSheet.squareContainer,
                                 {
                                     opacity: squareOpacity,
+                                    transform: [
+                                        {
+                                            scale: squareScale,
+                                        },
+                                    ],
                                 },
                             ]}
                         >
@@ -212,11 +297,14 @@ export default function Home(props) {
                             </View>
                         </Animated.View>
 
-                        <View style={styleSheet.buttonContainer}>
+                        <View style={styleSheet.bottomBtnsContainer}>
                             <ClassicButton
                                 title="Flash"
-                                style={styleSheet.button}
+                                style={styleSheet.cameraToolBtn}
                                 onPress={() => {
+                                    Haptics.impactAsync(
+                                        Haptics.ImpactFeedbackStyle.Medium
+                                    );
                                     setFlasState(
                                         flasState ===
                                             Camera.Constants.FlashMode.torch
@@ -227,10 +315,14 @@ export default function Home(props) {
                             ></ClassicButton>
                             <ClassicButton
                                 title="Flip"
-                                style={styleSheet.button}
+                                style={styleSheet.cameraToolBtn}
                                 onPress={() => {
-                                    setType(
-                                        type === Camera.Constants.Type.back
+                                    Haptics.impactAsync(
+                                        Haptics.ImpactFeedbackStyle.Medium
+                                    );
+                                    setCameraType(
+                                        cameraType ===
+                                            Camera.Constants.Type.back
                                             ? Camera.Constants.Type.front
                                             : Camera.Constants.Type.back
                                     );
@@ -238,13 +330,18 @@ export default function Home(props) {
                             ></ClassicButton>
                             <ClassicButton
                                 title="Exit"
-                                style={styleSheet.button}
+                                style={styleSheet.cameraToolBtn}
                                 onPress={() => {
+                                    Haptics.impactAsync(
+                                        Haptics.ImpactFeedbackStyle.Medium
+                                    );
                                     setCameraOpened(false);
                                     setContentScanned(false);
                                     setFlasState(
                                         Camera.Constants.FlashMode.off
                                     );
+                                    Animated.timing(squareScale).stop();
+                                    Animated.timing(squareOpacity).stop();
                                 }}
                             ></ClassicButton>
                         </View>
@@ -252,7 +349,7 @@ export default function Home(props) {
                 ) : (
                     <ClassicButton
                         onPress={openCamera}
-                        style={styleSheet.button}
+                        style={styleSheet.cameraToolBtn}
                         title="Scan"
                     ></ClassicButton>
                 )}

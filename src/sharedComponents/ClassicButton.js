@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useContext } from "react";
 import { TouchableOpacity, StyleSheet, Text } from "react-native";
+
+// Context
+import { Utils } from "../context/Utils";
 
 // Dark Mode
 import { useColorScheme } from "react-native-appearance";
@@ -16,6 +19,9 @@ export default function ClassicButton(props) {
     }
     const { title = "", style = {}, textStyle = {}, onPress } = props;
 
+    // context
+    const { actuatedNormalize } = useContext(Utils);
+
     // ---------------------------------------Styles---------------------------------------------
     const styles = StyleSheet.create({
         button: {
@@ -24,18 +30,18 @@ export default function ClassicButton(props) {
             borderRadius: 5,
             justifyContent: "center",
             alignItems: "center",
-
-            backgroundColor: "red",
-            // shadowColor: "#2AC062",
-            // shadowOpacity: 0.4,
-            // shadowOffset: { height: 10, width: 0 },
-            // shadowRadius: 20,
+            backgroundColor:
+                colorScheme == "light"
+                    ? lightColors.toolBar
+                    : darkColors.toolBar,
         },
-
         text: {
-            fontSize: 16,
+            fontSize: actuatedNormalize(14),
             textTransform: "uppercase",
-            color: "#FFFFFF",
+            color:
+                colorScheme == "light"
+                    ? lightColors.textDimmed
+                    : darkColors.textDimmed,
             textAlign: "center",
             fontWeight: "bold",
         },
