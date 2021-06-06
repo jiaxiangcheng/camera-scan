@@ -142,15 +142,18 @@ export default function Punctuation(props) {
             width: "100%",
             justifyContent: "flex-start",
             alignItems: "center",
-            marginTop: 10,
+            backgroundColor:
+                colorScheme == "light"
+                    ? lightColors.toolBar
+                    : darkColors.toolBar,
+            borderRadius: 15,
+            paddingTop: 20,
         },
         itemContainer: {
             height: 50,
             width: "100%",
             justifyContent: "center",
             alignItems: "center",
-            //backgroundColor: "purple",
-            //borderWidth: 2,
         },
         firstRow: {
             flex: 1,
@@ -165,7 +168,6 @@ export default function Punctuation(props) {
             width: "95%",
             justifyContent: "flex-start",
             alignItems: "center",
-            //backgroundColor: "gold",
             paddingTop: 5,
         },
     });

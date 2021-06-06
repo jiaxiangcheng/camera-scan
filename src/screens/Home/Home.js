@@ -134,10 +134,6 @@ export default function Home(props) {
                 dummyData.current = await getDummyData(scannedCode);
                 // Delay some time to mimic the request
                 setTimeout(function () {
-                    // To use native modal view uncomment the below code and comment 'setModalVisible(true)' line;
-                    /*props.navigation.navigate("ProductDetails", {
-                        content: info,
-                    });*/
                     setModalVisible(true);
                     squareColor.current = "white";
                 }, 1000);
@@ -146,7 +142,7 @@ export default function Home(props) {
                 setContentScanned(true);
 
                 Alert.alert(
-                    `EAN [${scannedCode}] not find`,
+                    `${scannedCode} not found in our database`,
                     "Scan another code please",
                     [
                         {
@@ -252,6 +248,9 @@ export default function Home(props) {
                                 style={modalStyleSheet.centeredView}
                                 productInfo={dummyData.current}
                                 closeAction={() => {
+                                    Haptics.impactAsync(
+                                        Haptics.ImpactFeedbackStyle.Medium
+                                    );
                                     setModalVisible(!modalVisible);
                                     setTimeout(function () {
                                         // set a delay before the next scan
@@ -340,6 +339,7 @@ export default function Home(props) {
                                     setFlasState(
                                         Camera.Constants.FlashMode.off
                                     );
+                                    setCameraType(Camera.Constants.Type.back);
                                     Animated.timing(squareScale).stop();
                                     Animated.timing(squareOpacity).stop();
                                 }}

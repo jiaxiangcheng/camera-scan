@@ -83,11 +83,15 @@ export default function ProductCard({ productInfo, closeAction }) {
         directionalOffsetThreshold: 80,
     };
 
+    const config2 = {
+        velocityThreshold: 0.3,
+        directionalOffsetThreshold: 80,
+    };
+
     const onSwipeDown = (gestureState) => {
         if (reachedTop.current) {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             closeAction();
-            console.log("swipe down");
         }
     };
 
@@ -106,11 +110,14 @@ export default function ProductCard({ productInfo, closeAction }) {
             marginTop: "25%",
             borderTopLeftRadius: 35,
             borderTopRightRadius: 35,
-            backgroundColor: "white",
+            backgroundColor:
+                colorScheme == "light"
+                    ? lightColors.background
+                    : darkColors.background,
         },
         verticalScrollView: {
+            flex: 1,
             width: "100%",
-            marginTop: 20,
         },
         verticalContainer: {
             flex: 1,
@@ -129,7 +136,10 @@ export default function ProductCard({ productInfo, closeAction }) {
             marginLeft: "2.5%",
             marginVertical: 10,
             borderRadius: 15,
-            backgroundColor: "white",
+            backgroundColor:
+                colorScheme == "light"
+                    ? lightColors.background
+                    : darkColors.background,
             justifyContent: "center",
             alignItems: "center",
         },
@@ -150,6 +160,10 @@ export default function ProductCard({ productInfo, closeAction }) {
             marginLeft: 15,
             marginVertical: 5,
             fontSize: actuatedNormalize(12),
+            color:
+                colorScheme == "light"
+                    ? lightColors.textMain
+                    : darkColors.textMain,
         },
     });
 
@@ -165,7 +179,32 @@ export default function ProductCard({ productInfo, closeAction }) {
         text: {
             marginVertical: 20,
             fontWeight: "bold",
-            fontSize: actuatedNormalize(17),
+            fontSize: actuatedNormalize(16),
+            color:
+                colorScheme == "light"
+                    ? lightColors.textMain
+                    : darkColors.textMain,
+        },
+    });
+
+    const topContainerStyle = StyleSheet.create({
+        container: {
+            flex: 0.1,
+            width: "100%",
+            justifyContent: "center",
+            alignItems: "flex-end",
+        },
+        button: {
+            height: 30,
+            width: 30,
+            marginRight: 30,
+        },
+        indicatorBar: {
+            width: 50,
+            height: 3,
+            backgroundColor: "grey",
+            borderRadius: 3,
+            alignSelf: "center",
         },
     });
 
@@ -176,8 +215,8 @@ export default function ProductCard({ productInfo, closeAction }) {
             marginLeft: "2.5%",
             justifyContent: "center",
             alignItems: "center",
-            marginVertical: 25,
             borderRadius: 15,
+            margin: 25,
         },
         punctuationContainer: {
             flex: 1,
@@ -189,17 +228,25 @@ export default function ProductCard({ productInfo, closeAction }) {
 
     return (
         <View style={modalStyle.modalView}>
-            {/* <ClassicButton
-                title="Close Modal"
-                style={modalStyle.button}
-                onPress={closeAction}
-            ></ClassicButton> */}
             <GestureRecognizer
                 onSwipeDown={(state) => onSwipeDown(state)}
-                config={config}
+                config={config2}
                 style={modalStyle.verticalScrollView}
             >
-                <ScrollView onScroll={handleScroll} scrollEventThrottle={16}>
+                <View style={topContainerStyle.container}>
+                    <View style={topContainerStyle.indicatorBar}></View>
+                    <ClassicButton
+                        title="X"
+                        style={topContainerStyle.button}
+                        onPress={closeAction}
+                    ></ClassicButton>
+                </View>
+
+                <ScrollView
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
+                    style={{ flex: 1 }}
+                >
                     <View style={basicInfoStyle.container}>
                         <View style={basicInfoStyle.leftContainer}>
                             <Image
@@ -228,12 +275,7 @@ export default function ProductCard({ productInfo, closeAction }) {
                         </View>
                     </View>
 
-                    <View
-                        style={[
-                            moreInfoStyle.container,
-                            { backgroundColor: "#E6E6E6", height: 680 },
-                        ]}
-                    >
+                    <View style={[moreInfoStyle.container, { height: 680 }]}>
                         <Punctuation
                             style={moreInfoStyle.punctuationContainer}
                         ></Punctuation>
@@ -268,7 +310,7 @@ export default function ProductCard({ productInfo, closeAction }) {
                     <View
                         style={[
                             moreInfoStyle.container,
-                            { backgroundColor: "purple", height: 250 },
+                            { backgroundColor: "#E6E6E6", height: 250 },
                         ]}
                     >
                         <Text style={{ textAlign: "center" }}>

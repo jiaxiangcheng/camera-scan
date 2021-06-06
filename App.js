@@ -6,7 +6,6 @@ import UtilsProvider from "./src/context/Utils";
 
 // Screens
 import Home from "./src/screens/Home/Home";
-import ProductDetails from "./src/screens/ProductDetails/ProductDetails";
 
 // Navigation
 import {
@@ -102,10 +101,6 @@ export default function App() {
                                 name="Main"
                                 component={createMainStack}
                                 options={{ headerShown: false }}
-                            ></RootStack.Screen>
-                            <RootStack.Screen
-                                name="ProductDetails"
-                                component={ProductDetails}
                             ></RootStack.Screen>
                         </RootStack.Navigator>
                     </NavigationContainer>
